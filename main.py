@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request, Form, File, UploadFile
 from fastapi.responses import Response, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.exceptions import HTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import qrcode
@@ -15,6 +14,8 @@ from io import BytesIO
 import base64
 import os
 import requests
+import json
+import datetime
 
 app = FastAPI(docs_url=None, redoc_url=None)
 templates = Jinja2Templates(directory="templates")
@@ -62,11 +63,9 @@ def load_logo(logo: str = None, file: UploadFile = None):
     - fallback to static/logo.png
     """
 
-    # 1) Upload file (highest priority)
     if file:
         return Image.open(file.file).convert("RGBA")
 
-    # 2) Base64 image
     if logo:
         try:
             logo_data = base64.b64decode(logo)
@@ -74,7 +73,6 @@ def load_logo(logo: str = None, file: UploadFile = None):
         except:
             pass
 
-        # 3) URL image
         try:
             resp = requests.get(logo, timeout=5)
             if resp.status_code == 200:
@@ -82,7 +80,6 @@ def load_logo(logo: str = None, file: UploadFile = None):
         except:
             pass
 
-    # 4) Default local logo
     if os.path.exists("static/logo.png"):
         return Image.open("static/logo.png").convert("RGBA")
 
@@ -99,11 +96,9 @@ def paste_logo(img, logo_img):
     logo_size = 60
     logo_img = logo_img.resize((logo_size, logo_size))
 
-    # White square background
     white_bg = Image.new("RGBA", (logo_size, logo_size), (255, 255, 255, 255))
     white_bg.paste(logo_img, (0, 0), mask=logo_img)
 
-    # Center position
     pos = (
         (img.size[0] - logo_size) // 2,
         (img.size[1] - logo_size) // 2
@@ -127,6 +122,7 @@ def generate_qr(request: Request, data: str = Form(...)):
     logo = load_logo()
     img = paste_logo(img, logo)
 
+    os.makedirs("static", exist_ok=True)
     img.save("static/qr.png")
 
     return templates.TemplateResponse("result.html", {
@@ -161,11 +157,12 @@ def api_generate_qr(
 
 
 # ----------------------------------------------------
-# SSR BARCODE GENERATION (FORM -> RESULT)
+# SSR BARCODE GENERATION
 # ----------------------------------------------------
 @app.post("/generate-barcode")
 def generate_barcode(request: Request, data: str = Form(...)):
     barcode = Code128(data, writer=ImageWriter())
+    os.makedirs("static", exist_ok=True)
     barcode.save("static/barcode")
 
     return templates.TemplateResponse("result.html", {
@@ -175,7 +172,7 @@ def generate_barcode(request: Request, data: str = Form(...)):
 
 
 # ----------------------------------------------------
-# API BARCODE GENERATION (RETURN IMAGE)
+# API BARCODE GENERATION
 # ----------------------------------------------------
 @app.post("/api/generate-barcode")
 def api_generate_barcode(data: str = Form(...)):
@@ -215,3 +212,52 @@ def api_generate_wifi_qr(
     buffer.seek(0)
 
     return Response(content=buffer.getvalue(), media_type="image/png")
+
+
+# ----------------------------------------------------
+# ADMIN LOGIN (LOG VISITOR INFO)
+# ----------------------------------------------------
+def get_client_ip(request: Request):
+    # If behind proxy (Cloudflare, nginx, etc.)
+    ip = request.headers.get("x-forwarded-for")
+    if ip:
+        return ip.split(",")[0].strip()
+
+    return request.client.host if request.client else "unknown"
+
+
+@app.get("/admin/login")
+def admin_login(request: Request):
+    try:
+        ip = get_client_ip(request)
+        user_agent = request.headers.get("user-agent", "unknown")
+        time = datetime.datetime.now().isoformat()
+
+        # ISP info (may return null if IP is localhost or blocked)
+        isp_info = {}
+        try:
+            resp = requests.get(f"https://ipinfo.io/{ip}/json", timeout=3)
+            if resp.status_code == 200:
+                isp_info = resp.json()
+        except:
+            isp_info = {}
+
+        record = {
+            "time": time,
+            "ip": ip,
+            "device": user_agent,
+            "isp": isp_info.get("org"),
+            "city": isp_info.get("city"),
+            "region": isp_info.get("region"),
+            "country": isp_info.get("country")
+        }
+
+        os.makedirs("logs", exist_ok=True)
+
+        with open("logs/admin-login-attempts.jsonl", "a") as f:
+            f.write(json.dumps(record) + "\n")
+
+    except Exception as e:
+        print("Logging error:", e)
+
+    return templates.TemplateResponse("admin/login.html", {"request": request})

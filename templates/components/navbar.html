@@ -4,35 +4,50 @@
 
             <!-- Logo -->
             <a href="/" class="text-xl font-bold text-gray-900 tracking-tight">
-                QR<span class="text-blue-600">ious </span>
+                QR<span class="text-blue-600">ious</span>
             </a>
 
             <!-- Desktop Links -->
             <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
-                <a href="/" class="text-gray-600 hover:text-blue-600 transition">
-                    Home
-                </a>
-                <a href="/docs" class="text-gray-600 hover:text-blue-600 transition">
-                    Documentation
-                </a>
-                <a href="#contact" class="text-gray-600 hover:text-blue-600 transition">
-                    Contact
-                </a>
+                <a href="/" class="text-gray-600 hover:text-blue-600 transition">Home</a>
+                <a href="/docs" class="text-gray-600 hover:text-blue-600 transition">Documentation</a>
+                <a href="#contact" class="text-gray-600 hover:text-blue-600 transition">Contact</a>
 
-                <!-- CTA Button -->
                 <a href="/docss"
                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm">
                     Get Started
                 </a>
             </div>
 
-            <!-- Mobile Menu Button (optional future expansion) -->
+            <!-- Mobile Menu Button -->
             <div class="md:hidden">
-                <button class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                <button id="menuToggle" class="text-gray-600 hover:text-gray-900 focus:outline-none text-2xl">
                     ☰
                 </button>
             </div>
 
         </div>
     </div>
+
+    <!-- Mobile Menu (Hidden by Default) -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-200">
+        <div class="px-6 py-4 space-y-4 text-sm font-medium">
+            <a href="/" class="block text-gray-600 hover:text-blue-600">Home</a>
+            <a href="/docs" class="block text-gray-600 hover:text-blue-600">Documentation</a>
+            <a href="#contact" class="block text-gray-600 hover:text-blue-600">Contact</a>
+            <a href="/docss"
+               class="block text-center px-4 py-2 bg-blue-600 text-white rounded-lg">
+                Get Started
+            </a>
+        </div>
+    </div>
 </nav>
+
+<script>
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    menuToggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+</script>
