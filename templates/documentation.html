@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>QR & Barcode API – Developer Documentation</title>
+    <title>Qrious – Developer Documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Qrious developer documentation for QR codes, WiFi QR, and barcode generation with branding and logo support.">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -14,10 +15,10 @@
     <!-- Header -->
     <div class="text-center">
         <h1 class="text-4xl font-extrabold text-gray-900">
-            QR & Barcode API Documentation
+            Qrious API Documentation
         </h1>
         <p class="mt-2 text-gray-600">
-            Generate QR codes with optional branding and WiFi auto-connect support.
+            Generate QR codes, WiFi QR, and barcodes with branding and logo support.
         </p>
     </div>
 
@@ -27,7 +28,7 @@
         <pre class="mt-2 bg-gray-50 p-3 rounded-lg text-sm">https://qr.soltryxsolutions.com</pre>
     </div>
 
-    <!-- Auth -->
+    <!-- Authentication -->
     <div class="mt-6 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-xl font-semibold">Authentication</h2>
         <p class="text-gray-600 mt-2">
@@ -41,11 +42,11 @@
             <span class="px-2 py-1 text-xs font-bold bg-green-100 text-green-700 rounded">
                 POST
             </span>
-            /generate-qr
+            /api/generate-qr
         </h2>
 
         <p class="text-gray-600 mt-2">
-            Generate a QR code from data with optional logo branding.
+            Generate QR codes with optional logo branding and high error correction.
         </p>
 
         <div class="mt-4">
@@ -72,11 +73,16 @@
                     </tr>
                     <tr>
                         <td class="p-2">logo</td>
-                        <td class="p-2">string (base64)</td>
+                        <td class="p-2">string (base64 / URL)</td>
                         <td class="p-2">No</td>
                         <td class="p-2">
-                            Base64 image placed in QR center.
-                            If omitted → default <code>static/logo.png</code>.
+                            Logo source:
+                            <ul class="list-disc ml-4 mt-1">
+                                <li>Base64 image</li>
+                                <li>Image URL</li>
+                                <li>File upload (multipart)</li>
+                                <li>Fallback: static/logo.png</li>
+                            </ul>
                         </td>
                     </tr>
                 </tbody>
@@ -84,24 +90,31 @@
         </div>
 
         <div class="mt-4">
-            <h4 class="font-semibold text-sm text-gray-700">Example (default logo)</h4>
+            <h4 class="font-semibold text-sm text-gray-700">Example (default or local logo)</h4>
             <pre class="bg-gray-50 p-3 rounded-lg text-xs">
-curl -X POST http://127.0.0.1:8000/api/generate-qr \
+curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
 -d "data=https://site.com" --output qr.png
             </pre>
         </div>
 
         <div class="mt-4">
-            <h4 class="font-semibold text-sm text-gray-700">Example (custom logo)</h4>
+            <h4 class="font-semibold text-sm text-gray-700">Example (URL logo)</h4>
             <pre class="bg-gray-50 p-3 rounded-lg text-xs">
-curl -X POST http://127.0.0.1:8000/api/generate-qr \
--d "data=https://site.com&logo=$(base64 -w 0 logo.png)" --output qr.png
+curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
+-d "data=https://site.com" \
+-d "logo=https://your-site.com/logo.png" \
+--output qr.png
             </pre>
         </div>
 
-        <p class="mt-3 text-sm text-gray-600">
-            High error correction ensures scanability even with logo overlay.
-        </p>
+        <div class="mt-4">
+            <h4 class="font-semibold text-sm text-gray-700">Example (base64 logo)</h4>
+            <pre class="bg-gray-50 p-3 rounded-lg text-xs">
+curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
+-d "data=https://site.com&logo=$(base64 -w 0 logo.png)" \
+--output qr.png
+            </pre>
+        </div>
     </div>
 
     <!-- WiFi -->
@@ -114,7 +127,7 @@ curl -X POST http://127.0.0.1:8000/api/generate-qr \
         </h2>
 
         <p class="text-gray-600 mt-2">
-            Generate WiFi QR codes that auto-connect on scan.
+            Generate WiFi QR codes that auto-connect on scan with optional branding.
         </p>
 
         <table class="w-full mt-3 border border-gray-200 text-sm">
@@ -145,21 +158,23 @@ curl -X POST http://127.0.0.1:8000/api/generate-qr \
                     <td class="p-2">No</td>
                     <td class="p-2">WPA or nopass (default: WPA)</td>
                 </tr>
+                <tr>
+                    <td class="p-2">logo</td>
+                    <td class="p-2">file / base64 / URL</td>
+                    <td class="p-2">No</td>
+                    <td class="p-2">Optional branding logo (white square supported)</td>
+                </tr>
             </tbody>
         </table>
 
         <pre class="mt-4 bg-gray-50 p-3 rounded-lg text-xs">
-curl -X POST http://127.0.0.1:8000/api/generate-wifi-qr \
--H "Content-Type: application/x-www-form-urlencoded" \
--d "ssid=test&password=test123&security=WPA" --output wifi.png
+curl -X POST https://qr.soltryxsolutions.com/api/generate-wifi-qr \
+-F "ssid=MyWiFi" \
+-F "password=Secret123" \
+-F "security=WPA" \
+-F "file=@logo.png" \
+--output wifi.png
         </pre>
-
-        <p class="mt-3 text-sm text-gray-600">
-            QR content:
-            <code class="block mt-1 text-xs bg-gray-50 p-2 rounded">
-WIFI:S:test;T:WPA;P:test123;;
-            </code>
-        </p>
     </div>
 
     <!-- Barcode -->
@@ -168,7 +183,7 @@ WIFI:S:test;T:WPA;P:test123;;
             <span class="px-2 py-1 text-xs font-bold bg-purple-100 text-purple-700 rounded">
                 POST
             </span>
-            /generate-barcode
+            /api/generate-barcode
         </h2>
 
         <p class="text-gray-600 mt-2">
@@ -193,18 +208,13 @@ WIFI:S:test;T:WPA;P:test123;;
                 </tr>
             </tbody>
         </table>
-
-        <pre class="mt-4 bg-gray-50 p-3 rounded-lg text-xs">
-curl -X POST https://qr.soltryxsolutions.com/generate-barcode \
--d "data=123456789012"
-        </pre>
     </div>
 
     <!-- Try -->
     <div class="mt-10 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-xl font-semibold">Try It Live</h2>
 
-        <form action="/generate-qr" method="post" class="mt-4">
+        <form action="/api/generate-qr" method="post" class="mt-4">
             <input type="text" name="data"
                    class="w-full p-3 border rounded-lg"
                    placeholder="Enter URL, WiFi, or text"
@@ -227,7 +237,7 @@ curl -X POST https://qr.soltryxsolutions.com/generate-barcode \
     </div>
 
     <div class="mt-12 text-center text-sm text-gray-500">
-        Soltryx Solutions © 2026 — Developer Documentation
+        Powered by Qrious – QR solutions by Soltryx Solutions
     </div>
 
 </div>
