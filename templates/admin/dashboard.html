@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<div class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p class="text-gray-500 mt-1">Login attempts ????</p>
+    </div>
+
+    <!-- Table -->
+    <div class="mt-6 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="font-semibold text-gray-800">Recent Activity</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="p-3 text-left font-medium text-gray-600">Time</th>
+                        <th class="p-3 text-left font-medium text-gray-600">IP</th>
+                        <th class="p-3 text-left font-medium text-gray-600">Device</th>
+                        <th class="p-3 text-left font-medium text-gray-600">ISP</th>
+                        <th class="p-3 text-left font-medium text-gray-600">City</th>
+                        <th class="p-3 text-left font-medium text-gray-600">Region</th>
+                        <th class="p-3 text-left font-medium text-gray-600">Country</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% if logs %}
+                    {% for log in logs %}
+                    <tr class="border-t hover:bg-gray-50 transition">
+                        <td class="p-3">{{ log.time }}</td>
+                        <td class="p-3 font-mono text-blue-600">{{ log.ip }}</td>
+                        <td class="p-3 truncate max-w-xs">{{ log.device }}</td>
+                        <td class="p-3">{{ log.isp or 'N/A' }}</td>
+                        <td class="p-3">{{ log.city or 'N/A' }}</td>
+                        <td class="p-3">{{ log.region or 'N/A' }}</td>
+                        <td class="p-3">{{ log.country or 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="p-6 text-center text-gray-400">
+                            No login attempts yet
+                        </td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

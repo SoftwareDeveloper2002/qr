@@ -226,14 +226,29 @@ def get_client_ip(request: Request):
     return request.client.host if request.client else "unknown"
 
 
+# ----------------------------------------------------
+# ADMIN LOGIN PAGE (SHOW FORM)
+# ----------------------------------------------------
 @app.get("/admin/login")
-def admin_login(request: Request):
+def admin_login_page(request: Request):
+    return templates.TemplateResponse("admin/login.html", {"request": request})
+
+
+# ----------------------------------------------------
+# ADMIN LOGIN SUBMIT (LOG + REDIRECT)
+# ----------------------------------------------------
+@app.post("/admin/login")
+def admin_login_submit(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...)
+):
     try:
         ip = get_client_ip(request)
         user_agent = request.headers.get("user-agent", "unknown")
         time = datetime.datetime.now().isoformat()
 
-        # ISP info (may return null if IP is localhost or blocked)
+        # ISP info
         isp_info = {}
         try:
             resp = requests.get(f"https://ipinfo.io/{ip}/json", timeout=3)
@@ -249,7 +264,8 @@ def admin_login(request: Request):
             "isp": isp_info.get("org"),
             "city": isp_info.get("city"),
             "region": isp_info.get("region"),
-            "country": isp_info.get("country")
+            "country": isp_info.get("country"),
+            "username": username
         }
 
         os.makedirs("logs", exist_ok=True)
@@ -260,4 +276,30 @@ def admin_login(request: Request):
     except Exception as e:
         print("Logging error:", e)
 
-    return templates.TemplateResponse("admin/login.html", {"request": request})
+    # redirect to dashboard
+    return RedirectResponse(url="/admin/dashboard", status_code=302)
+
+@app.get("/admin/dashboard")
+def admin_dashboard(request: Request):
+    logs = []
+
+    log_file = "logs/admin-login-attempts.jsonl"
+
+    if os.path.exists(log_file):
+        with open(log_file, "r") as f:
+            for line in f:
+                try:
+                    logs.append(json.loads(line))
+                except:
+                    pass
+
+    # newest first
+    logs = list(reversed(logs))
+
+    return templates.TemplateResponse(
+        "admin/dashboard.html",
+        {
+            "request": request,
+            "logs": logs
+        }
+    )
