@@ -2,9 +2,34 @@
 <html lang="en">
 <head>
     <title>Qrious – Developer Documentation</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Qrious developer documentation for QR codes, WiFi QR, and barcode generation with branding and logo support.">
+
+    <meta name="description" content="Developer-friendly QR API by Qrious for generating QR codes, WiFi codes, and barcodes with branding support. Fast, reliable, and easy to integrate.">
+    <meta name="keywords" content="Qrious, QR API, QR code generator, barcode API, WiFi QR, developer QR API, QR generation service">
+    <meta name="author" content="Qrious">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Qrious - Developer Friendly QR Generation">
+    <meta property="og:description" content="Generate QR codes, WiFi codes, and barcodes with branding and API support. Fast and developer-friendly QR solutions.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://qr.soltryxsolutions.com">
+    <meta property="og:image" content="https://soltryxsolutions.com/SoltryxSolutionsLogo.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Qrious - Developer Friendly QR Generation">
+    <meta name="twitter:description" content="Generate QR codes, WiFi QR, and barcodes via API with branding support.">
+    <meta name="twitter:image" content="https://soltryxsolutions.com/SoltryxSolutionsLogo.png"> 
+
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        pre {
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
@@ -89,31 +114,76 @@
             </table>
         </div>
 
-        <div class="mt-4">
-            <h4 class="font-semibold text-sm text-gray-700">Example (default or local logo)</h4>
-            <pre class="bg-gray-50 p-3 rounded-lg text-xs">
+        <pre class="mt-4 bg-gray-900 text-green-400 p-3 rounded-lg text-xs">
 curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
 -d "data=https://site.com" --output qr.png
-            </pre>
-        </div>
+        </pre>
 
-        <div class="mt-4">
-            <h4 class="font-semibold text-sm text-gray-700">Example (URL logo)</h4>
-            <pre class="bg-gray-50 p-3 rounded-lg text-xs">
-curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
--d "data=https://site.com" \
--d "logo=https://your-site.com/logo.png" \
---output qr.png
-            </pre>
-        </div>
+        <!-- Language Examples -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-900">Language Examples</h3>
 
-        <div class="mt-4">
-            <h4 class="font-semibold text-sm text-gray-700">Example (base64 logo)</h4>
-            <pre class="bg-gray-50 p-3 rounded-lg text-xs">
-curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
--d "data=https://site.com&logo=$(base64 -w 0 logo.png)" \
---output qr.png
-            </pre>
+            <div class="grid md:grid-cols-2 gap-6 mt-4">
+
+                <pre class="bg-gray-900 text-green-400 rounded-xl p-4 text-xs">
+<b>Node.js (Axios)</b>
+
+const axios = require("axios");
+const fs = require("fs");
+
+axios.post(
+  "https://qr.soltryxsolutions.com/api/generate-qr",
+  new URLSearchParams({ data: "https://site.com" }),
+  { responseType: "arraybuffer" }
+)
+.then(res => fs.writeFileSync("qr.png", res.data));
+                </pre>
+
+                <pre class="bg-gray-900 text-blue-400 rounded-xl p-4 text-xs">
+<b>Python (Requests)</b>
+
+import requests
+
+response = requests.post(
+  "https://qr.soltryxsolutions.com/api/generate-qr",
+  data={"data": "https://site.com"}
+)
+
+with open("qr.png", "wb") as f:
+    f.write(response.content)
+                </pre>
+
+                <pre class="bg-gray-900 text-pink-400 rounded-xl p-4 text-xs">
+<b>PHP (cURL)</b>
+
+$ch = curl_init("https://qr.soltryxsolutions.com/api/generate-qr");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, "data=https://site.com");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$result = curl_exec($ch);
+file_put_contents("qr.png", $result);
+curl_close($ch);
+                </pre>
+
+                <pre class="bg-gray-900 text-orange-400 rounded-xl p-4 text-xs">
+<b>Java (HttpClient)</b>
+
+HttpClient client = HttpClient.newHttpClient();
+
+HttpRequest request = HttpRequest.newBuilder()
+  .uri(URI.create("https://qr.soltryxsolutions.com/api/generate-qr"))
+  .POST(HttpRequest.BodyPublishers.ofString("data=https://site.com"))
+  .header("Content-Type", "application/x-www-form-urlencoded")
+  .build();
+
+HttpResponse<byte[]> response =
+  client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+Files.write(Paths.get("qr.png"), response.body());
+                </pre>
+
+            </div>
         </div>
     </div>
 
@@ -167,7 +237,7 @@ curl -X POST https://qr.soltryxsolutions.com/api/generate-qr \
             </tbody>
         </table>
 
-        <pre class="mt-4 bg-gray-50 p-3 rounded-lg text-xs">
+        <pre class="mt-4 bg-gray-900 text-green-400 p-3 rounded-lg text-xs">
 curl -X POST https://qr.soltryxsolutions.com/api/generate-wifi-qr \
 -F "ssid=MyWiFi" \
 -F "password=Secret123" \
@@ -175,6 +245,75 @@ curl -X POST https://qr.soltryxsolutions.com/api/generate-wifi-qr \
 -F "file=@logo.png" \
 --output wifi.png
         </pre>
+
+        <!-- Language Examples -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-900">Language Examples</h3>
+
+            <div class="grid md:grid-cols-2 gap-6 mt-4">
+
+                <pre class="bg-gray-900 text-green-400 rounded-xl p-4 text-xs">
+<b>Node.js</b>
+
+axios.post(
+"https://qr.soltryxsolutions.com/api/generate-wifi-qr",
+new URLSearchParams({
+  ssid: "MyWiFi",
+  password: "Secret123",
+  security: "WPA"
+}),
+{ responseType: "arraybuffer" }
+).then(res => fs.writeFileSync("wifi.png", res.data));
+                </pre>
+
+                <pre class="bg-gray-900 text-blue-400 rounded-xl p-4 text-xs">
+<b>Python</b>
+
+response = requests.post(
+  "https://qr.soltryxsolutions.com/api/generate-wifi-qr",
+  data={
+    "ssid": "MyWiFi",
+    "password": "Secret123",
+    "security": "WPA"
+  }
+)
+
+with open("wifi.png", "wb") as f:
+    f.write(response.content)
+                </pre>
+
+                <pre class="bg-gray-900 text-pink-400 rounded-xl p-4 text-xs">
+<b>PHP</b>
+
+$fields = http_build_query([
+  "ssid" => "MyWiFi",
+  "password" => "Secret123",
+  "security" => "WPA"
+]);
+
+$ch = curl_init("https://qr.soltryxsolutions.com/api/generate-wifi-qr");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+file_put_contents("wifi.png", curl_exec($ch));
+curl_close($ch);
+                </pre>
+
+                <pre class="bg-gray-900 text-orange-400 rounded-xl p-4 text-xs">
+<b>Java</b>
+
+String form = "ssid=MyWiFi&password=Secret123&security=WPA";
+
+HttpRequest request = HttpRequest.newBuilder()
+  .uri(URI.create("https://qr.soltryxsolutions.com/api/generate-wifi-qr"))
+  .POST(HttpRequest.BodyPublishers.ofString(form))
+  .header("Content-Type", "application/x-www-form-urlencoded")
+  .build();
+                </pre>
+
+            </div>
+        </div>
     </div>
 
     <!-- Barcode -->
@@ -208,6 +347,59 @@ curl -X POST https://qr.soltryxsolutions.com/api/generate-wifi-qr \
                 </tr>
             </tbody>
         </table>
+
+        <!-- Language Examples -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-900">Language Examples</h3>
+
+            <div class="grid md:grid-cols-2 gap-6 mt-4">
+
+                <pre class="bg-gray-900 text-green-400 rounded-xl p-4 text-xs">
+<b>Node.js</b>
+
+axios.post(
+"https://qr.soltryxsolutions.com/api/generate-barcode",
+new URLSearchParams({ data: "123456789" }),
+{ responseType: "arraybuffer" }
+).then(res => fs.writeFileSync("barcode.png", res.data));
+                </pre>
+
+                <pre class="bg-gray-900 text-blue-400 rounded-xl p-4 text-xs">
+<b>Python</b>
+
+response = requests.post(
+  "https://qr.soltryxsolutions.com/api/generate-barcode",
+  data={"data": "123456789"}
+)
+
+with open("barcode.png", "wb") as f:
+    f.write(response.content)
+                </pre>
+
+                <pre class="bg-gray-900 text-pink-400 rounded-xl p-4 text-xs">
+<b>PHP</b>
+
+$ch = curl_init("https://qr.soltryxsolutions.com/api/generate-barcode");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, "data=123456789");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+file_put_contents("barcode.png", curl_exec($ch));
+curl_close($ch);
+                </pre>
+
+                <pre class="bg-gray-900 text-orange-400 rounded-xl p-4 text-xs">
+<b>Java</b>
+
+HttpRequest request = HttpRequest.newBuilder()
+  .uri(URI.create("https://qr.soltryxsolutions.com/api/generate-barcode"))
+  .POST(HttpRequest.BodyPublishers.ofString("data=123456789"))
+  .header("Content-Type", "application/x-www-form-urlencoded")
+  .build();
+                </pre>
+
+            </div>
+        </div>
     </div>
 
     <!-- Try -->
