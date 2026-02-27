@@ -3,7 +3,7 @@ from fastapi.responses import Response, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from fastapi.responses import RedirectResponse
 import qrcode
 from qrcode.constants import ERROR_CORRECT_H
 from barcode import Code128
