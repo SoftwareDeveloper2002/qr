@@ -92,6 +92,13 @@
                        class="w-full p-2 border rounded-lg">
             </div>
 
+            <!-- Preview Logo -->
+            <div id="logoPreview" class="mt-4 hidden text-center">
+                <img id="logoPreviewImg"
+                     class="mx-auto w-20 h-20 object-cover rounded-lg shadow"
+                     alt="Logo preview">
+            </div>
+
             <!-- Button -->
             <div class="mt-8 text-center">
                 <button onclick="generateCode()"
@@ -126,13 +133,37 @@ const wifiFields = document.getElementById("wifiFields");
 const logoUpload = document.getElementById("logoUpload");
 const imageOutput = document.getElementById("imageOutput");
 const output = document.getElementById("output");
+const logoFile = document.getElementById("logoFile");
+const logoPreview = document.getElementById("logoPreview");
+const logoPreviewImg = document.getElementById("logoPreviewImg");
 
+// preview uploaded logo
+logoFile.addEventListener("change", function() {
+    const file = this.files[0];
+    if (!file) {
+        logoPreview.classList.add("hidden");
+        return;
+    }
+
+    logoPreviewImg.src = URL.createObjectURL(file);
+    logoPreview.classList.remove("hidden");
+});
+
+// show/hide sections based on type
 codeType.addEventListener("change", function() {
-    barcodeContainer.classList.toggle("hidden", this.value !== "barcode");
-    wifiFields.classList.toggle("hidden", this.value !== "wifi");
-    logoUpload.classList.toggle("hidden", this.value !== "qr");
+    const type = this.value;
+
+    barcodeContainer.classList.toggle("hidden", type !== "barcode");
+    wifiFields.classList.toggle("hidden", type !== "wifi");
+    logoUpload.classList.toggle("hidden", type !== "qr");
+
     imageOutput.classList.add("hidden");
     output.innerHTML = "";
+});
+
+// trigger change on first load so correct sections show
+window.addEventListener("DOMContentLoaded", () => {
+    codeType.dispatchEvent(new Event("change"));
 });
 
 async function generateCode() {
@@ -145,8 +176,8 @@ async function generateCode() {
 
         form.append("data", data);
 
-        // logo upload (optional)
-        const file = document.getElementById("logoFile").files[0];
+        // attach logo if selected
+        const file = logoFile.files[0];
         if (file) form.append("file", file);
 
         const res = await fetch("/api/generate-qr", {
