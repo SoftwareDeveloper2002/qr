@@ -9,7 +9,7 @@
             </h2>
 
             <p class="mt-3 text-gray-600">
-                Live demo — generate QR codes, barcodes, and WiFi QR instantly.
+                Live demo — generate QR codes, barcodes, and WiFi QR instantly using the API.
             </p>
         </div>
 
@@ -95,7 +95,9 @@
                 <div id="output"
                      class="flex justify-center items-center p-4"></div>
 
-                <svg id="barcode" class="mx-auto"></svg>
+                <img id="imageOutput"
+                     class="mx-auto rounded-lg shadow-md hidden"
+                     alt="Generated code">
 
             </div>
 
@@ -105,52 +107,56 @@
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
 <script>
 const codeType = document.getElementById("codeType");
 const barcodeContainer = document.getElementById("barcodeFormatContainer");
 const wifiFields = document.getElementById("wifiFields");
+const imageOutput = document.getElementById("imageOutput");
+const output = document.getElementById("output");
 
 codeType.addEventListener("change", function() {
     barcodeContainer.classList.toggle("hidden", this.value !== "barcode");
     wifiFields.classList.toggle("hidden", this.value !== "wifi");
+    imageOutput.classList.add("hidden");
+    output.innerHTML = "";
 });
 
-function generateCode() {
+async function generateCode() {
     const type = codeType.value;
-    const output = document.getElementById("output");
-    const barcodeSvg = document.getElementById("barcode");
-
-    output.innerHTML = "";
-    barcodeSvg.innerHTML = "";
+    const form = new FormData();
 
     if (type === "qr") {
         const data = document.getElementById("inputData").value;
         if (!data) return alert("Enter data");
 
-        new QRCode(output, {
-            text: data,
-            width: 220,
-            height: 220,
-            colorDark: "#000",
-            colorLight: "#ffffff"
+        form.append("data", data);
+
+        const res = await fetch("/api/generate-qr", {
+            method: "POST",
+            body: form
         });
+
+        const blob = await res.blob();
+        imageOutput.src = URL.createObjectURL(blob);
+        imageOutput.classList.remove("hidden");
 
     } else if (type === "barcode") {
         const data = document.getElementById("inputData").value;
-        if (!data) return alert("Enter data");
-
         const format = document.getElementById("barcodeFormat").value;
 
-        JsBarcode("#barcode", data, {
-            format: format,
-            lineColor: "#000",
-            width: 2,
-            height: 80,
-            displayValue: true
+        if (!data) return alert("Enter data");
+
+        form.append("data", data);
+        form.append("format", format);
+
+        const res = await fetch("/api/generate-barcode", {
+            method: "POST",
+            body: form
         });
+
+        const blob = await res.blob();
+        imageOutput.src = URL.createObjectURL(blob);
+        imageOutput.classList.remove("hidden");
 
     } else if (type === "wifi") {
         const ssid = document.getElementById("wifiSsid").value;
@@ -158,15 +164,18 @@ function generateCode() {
 
         if (!ssid || !password) return alert("Enter WiFi details");
 
-        const wifiData = `WIFI:S:${ssid};T:WPA;P:${password};;`;
+        form.append("ssid", ssid);
+        form.append("password", password);
+        form.append("security", "WPA");
 
-        new QRCode(output, {
-            text: wifiData,
-            width: 220,
-            height: 220,
-            colorDark: "#000",
-            colorLight: "#ffffff"
+        const res = await fetch("/api/generate-wifi-qr", {
+            method: "POST",
+            body: form
         });
+
+        const blob = await res.blob();
+        imageOutput.src = URL.createObjectURL(blob);
+        imageOutput.classList.remove("hidden");
     }
 }
 </script>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Endpoint Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-10">
+
+<h1 class="text-xl font-bold">API Tester</h1>
+
+<form id="qrForm" class="mt-4">
+    <input id="data" type="text" placeholder="data"
+           class="border p-2 rounded w-full">
+    <button class="mt-2 bg-blue-600 text-white px-4 py-2 rounded">
+        Test QR
+    </button>
+</form>
+
+<img id="result" class="mt-4 border">
+
+<script>
+document.getElementById('qrForm').onsubmit = async function(e) {
+    e.preventDefault();
+
+    const data = document.getElementById('data').value;
+    const form = new FormData();
+    form.append("data", data);
+
+    const res = await fetch("/api/generate-qr", {
+        method: "POST",
+        body: form
+    });
+
+    const blob = await res.blob();
+    document.getElementById('result').src = URL.createObjectURL(blob);
+};
+</script>
+
+</body>
+</html>

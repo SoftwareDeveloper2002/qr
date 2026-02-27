@@ -303,3 +303,8 @@ def admin_dashboard(request: Request):
             "logs": logs
         }
     )
+
+
+@app.get("/tests")
+def test_page(request: Request):
+    return templates.TemplateResponse("tests/test-endpoints.html", {"request": request})
