@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Request, Form, File, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import Response, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import HTTPException
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import qrcode
 from qrcode.constants import ERROR_CORRECT_H
@@ -20,6 +22,7 @@ templates = Jinja2Templates(directory="templates")
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
 # ----------------------------------------------------
 # SSR PAGES
 # ----------------------------------------------------
@@ -31,6 +34,21 @@ def home(request: Request):
 @app.get("/docs")
 def docs(request: Request):
     return templates.TemplateResponse("documentation.html", {"request": request})
+
+
+# ----------------------------------------------------
+# 404 HANDLER (CUSTOM PAGE)
+# ----------------------------------------------------
+@app.exception_handler(StarletteHTTPException)
+async def custom_404_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        return templates.TemplateResponse(
+            "404.html",
+            {"request": request},
+            status_code=404
+        )
+
+    return HTMLResponse(str(exc.detail), status_code=exc.status_code)
 
 
 # ----------------------------------------------------
