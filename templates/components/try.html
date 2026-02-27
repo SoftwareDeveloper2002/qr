@@ -9,7 +9,7 @@
             </h2>
 
             <p class="mt-3 text-gray-600">
-                Live demo — generate QR codes, barcodes, and WiFi QR instantly using the API.
+                Live demo — generate QR codes with optional logo, barcodes, and WiFi QR instantly.
             </p>
         </div>
 
@@ -80,6 +80,18 @@
 
             </div>
 
+            <!-- Logo Upload (QR only) -->
+            <div id="logoUpload" class="mt-6 hidden">
+                <label class="block text-sm text-gray-600 mb-2">
+                    Upload Logo (optional)
+                </label>
+
+                <input id="logoFile"
+                       type="file"
+                       accept="image/*"
+                       class="w-full p-2 border rounded-lg">
+            </div>
+
             <!-- Button -->
             <div class="mt-8 text-center">
                 <button onclick="generateCode()"
@@ -111,12 +123,14 @@
 const codeType = document.getElementById("codeType");
 const barcodeContainer = document.getElementById("barcodeFormatContainer");
 const wifiFields = document.getElementById("wifiFields");
+const logoUpload = document.getElementById("logoUpload");
 const imageOutput = document.getElementById("imageOutput");
 const output = document.getElementById("output");
 
 codeType.addEventListener("change", function() {
     barcodeContainer.classList.toggle("hidden", this.value !== "barcode");
     wifiFields.classList.toggle("hidden", this.value !== "wifi");
+    logoUpload.classList.toggle("hidden", this.value !== "qr");
     imageOutput.classList.add("hidden");
     output.innerHTML = "";
 });
@@ -130,6 +144,10 @@ async function generateCode() {
         if (!data) return alert("Enter data");
 
         form.append("data", data);
+
+        // logo upload (optional)
+        const file = document.getElementById("logoFile").files[0];
+        if (file) form.append("file", file);
 
         const res = await fetch("/api/generate-qr", {
             method: "POST",
