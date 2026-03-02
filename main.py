@@ -58,9 +58,6 @@ def create_key(owner: str = Form(...), limit: int = Form(5000)):
     return create_api_key_service(owner, limit)
 
 
-# ----------------------------------------------------
-# QR GENERATION
-# ----------------------------------------------------
 @app.post("/api/generate-qr")
 def api_generate_qr(
     data: str = Form(...),
