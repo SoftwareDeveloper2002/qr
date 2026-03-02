@@ -9,7 +9,7 @@
             </h2>
 
             <p class="mt-3 text-gray-600">
-                Live demo — generate QR codes with optional logo, barcodes, and WiFi QR instantly.
+                Live demo — generate QR codes with optional logo, expiration, password protection, barcodes, and WiFi QR instantly.
             </p>
         </div>
 
@@ -55,14 +55,39 @@
             <!-- Input -->
             <div class="mt-6">
                 <label class="block text-sm text-gray-600 mb-2">
-                    Enter Data
+                    Enter Data (URL, product code, or WiFi SSID)
                 </label>
 
                 <input id="inputData"
                        type="text"
                        class="w-full p-3 rounded-lg border border-gray-200
                               focus:outline-none focus:ring-2 focus:ring-blue-400"
-                       placeholder="URL, product code, or WiFi SSID">
+                       placeholder="https://example.com">
+            </div>
+
+            <!-- QR Options (Expiration & Password) -->
+            <div id="qrOptions" class="mt-6 grid md:grid-cols-2 gap-4">
+
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2">
+                        Expiration (minutes, optional)
+                    </label>
+                    <input id="qrExpires"
+                           type="number"
+                           class="w-full p-3 rounded-lg border"
+                           placeholder="e.g. 60">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2">
+                        Password (optional)
+                    </label>
+                    <input id="qrPassword"
+                           type="text"
+                           class="w-full p-3 rounded-lg border"
+                           placeholder="secure access">
+                </div>
+
             </div>
 
             <!-- WiFi Fields -->
@@ -156,6 +181,7 @@ codeType.addEventListener("change", function() {
     barcodeContainer.classList.toggle("hidden", type !== "barcode");
     wifiFields.classList.toggle("hidden", type !== "wifi");
     logoUpload.classList.toggle("hidden", type !== "qr");
+    qrOptions.classList.toggle("hidden", type !== "qr");
 
     imageOutput.classList.add("hidden");
     output.innerHTML = "";
@@ -172,11 +198,16 @@ async function generateCode() {
 
     if (type === "qr") {
         const data = document.getElementById("inputData").value;
+        const expires = document.getElementById("qrExpires").value;
+        const password = document.getElementById("qrPassword").value;
+
         if (!data) return alert("Enter data");
 
         form.append("data", data);
 
-        // attach logo if selected
+        if (expires) form.append("expires_in", expires);
+        if (password) form.append("password", password);
+
         const file = logoFile.files[0];
         if (file) form.append("file", file);
 
