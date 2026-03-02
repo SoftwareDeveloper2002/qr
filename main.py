@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, File, UploadFile
-from fastapi.responses import Response, HTMLResponse, RedirectResponse
+from fastapi.responses import Response, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -84,11 +84,6 @@ def redirect_qr(request: Request, qr_id: str, access_key: str = None):
 @app.get("/api/qr/{qr_id}/stats")
 def qr_stats(qr_id: str):
     return get_qr_stats(qr_id)
-
-
-@app.get("/api/qr/export")
-def export():
-    return export_stats()
 
 
 # ----------------------------------------------------

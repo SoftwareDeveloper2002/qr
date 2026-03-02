@@ -150,48 +150,7 @@
     </div>
 
 </div>
-
 <script>
-const codeType = document.getElementById("codeType");
-const barcodeContainer = document.getElementById("barcodeFormatContainer");
-const wifiFields = document.getElementById("wifiFields");
-const logoUpload = document.getElementById("logoUpload");
-const imageOutput = document.getElementById("imageOutput");
-const output = document.getElementById("output");
-const logoFile = document.getElementById("logoFile");
-const logoPreview = document.getElementById("logoPreview");
-const logoPreviewImg = document.getElementById("logoPreviewImg");
-
-// preview uploaded logo
-logoFile.addEventListener("change", function() {
-    const file = this.files[0];
-    if (!file) {
-        logoPreview.classList.add("hidden");
-        return;
-    }
-
-    logoPreviewImg.src = URL.createObjectURL(file);
-    logoPreview.classList.remove("hidden");
-});
-
-// show/hide sections based on type
-codeType.addEventListener("change", function() {
-    const type = this.value;
-
-    barcodeContainer.classList.toggle("hidden", type !== "barcode");
-    wifiFields.classList.toggle("hidden", type !== "wifi");
-    logoUpload.classList.toggle("hidden", type !== "qr");
-    qrOptions.classList.toggle("hidden", type !== "qr");
-
-    imageOutput.classList.add("hidden");
-    output.innerHTML = "";
-});
-
-// trigger change on first load so correct sections show
-window.addEventListener("DOMContentLoaded", () => {
-    codeType.dispatchEvent(new Event("change"));
-});
-
 async function generateCode() {
     const type = codeType.value;
     const form = new FormData();
@@ -200,21 +159,26 @@ async function generateCode() {
         const data = document.getElementById("inputData").value;
         const expires = document.getElementById("qrExpires").value;
         const password = document.getElementById("qrPassword").value;
+        const file = logoFile.files[0];
 
         if (!data) return alert("Enter data");
 
         form.append("data", data);
 
-        if (expires) form.append("expires_in", expires);
+        if (expires) form.append("expires_in", String(expires));
         if (password) form.append("password", password);
 
-        const file = logoFile.files[0];
         if (file) form.append("file", file);
 
         const res = await fetch("/api/generate-qr", {
             method: "POST",
             body: form
         });
+
+        if (!res.ok) {
+            const text = await res.text();
+            return alert("Error: " + text);
+        }
 
         const blob = await res.blob();
         imageOutput.src = URL.createObjectURL(blob);
@@ -234,6 +198,11 @@ async function generateCode() {
             body: form
         });
 
+        if (!res.ok) {
+            const text = await res.text();
+            return alert("Error: " + text);
+        }
+
         const blob = await res.blob();
         imageOutput.src = URL.createObjectURL(blob);
         imageOutput.classList.remove("hidden");
@@ -252,6 +221,11 @@ async function generateCode() {
             method: "POST",
             body: form
         });
+
+        if (!res.ok) {
+            const text = await res.text();
+            return alert("Error: " + text);
+        }
 
         const blob = await res.blob();
         imageOutput.src = URL.createObjectURL(blob);

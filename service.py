@@ -153,8 +153,10 @@ def create_qr_record(destination, expires_in, password, tags=None, template=None
     return qr_id
 
 
-def generate_qr_image(qr_id, logo=None, file=None):
-    redirect_url = f"/r/{qr_id}"
+def generate_qr_image(qr_id, logo=None, file=None, request=None):
+    base = str(request.base_url).rstrip("/")
+    redirect_url = f"{base}/r/{qr_id}"
+
     qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H)
     qr.add_data(redirect_url)
     qr.make(fit=True)
@@ -163,7 +165,6 @@ def generate_qr_image(qr_id, logo=None, file=None):
     img = paste_logo(img, load_logo(logo, file))
     img.save(f"static/{qr_id}.png")
     return img
-
 
 def generate_qr(data, expires_in, password, logo, file, request, template=None, webhook=None):
     if len(data) > MAX_DATA_LENGTH:
@@ -177,7 +178,7 @@ def generate_qr(data, expires_in, password, logo, file, request, template=None, 
     store[qr_id]["webhook"] = webhook
     save_qr_store(store)
 
-    img = generate_qr_image(qr_id, logo, file)
+    img = generate_qr_image(qr_id, logo, file, request)
     log_event({"type": "qr.generate", "qr_id": qr_id})
     return Response(content=img_to_bytes(img), media_type="image/png")
 
