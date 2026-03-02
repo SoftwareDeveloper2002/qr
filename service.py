@@ -5,7 +5,7 @@ import datetime
 import hashlib
 import threading
 import base64
-from typing import Optional, Dict, List
+from typing import Optional
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import Response, RedirectResponse
 from io import BytesIO
@@ -14,14 +14,10 @@ import qrcode
 from qrcode.constants import ERROR_CORRECT_H
 from barcode import Code128
 from barcode.writer import ImageWriter
-
 from api_keys import create_api_key
 from geo import geo_from_ip
 from device import detect_device
 
-# ----------------------------------------------------
-# CONFIG
-# ----------------------------------------------------
 MAX_DATA_LENGTH = 2000
 MAX_LOGO_SIZE = 2 * 1024 * 1024
 QR_STORE_FILE = "analytics/qr_store.json"
@@ -41,7 +37,7 @@ def _write(path, data):
             json.dump(data, f)
 
 
-def load_qr_store() -> dict:
+def load_qr_store():
     if not os.path.exists(QR_STORE_FILE):
         return {}
     try:
@@ -51,22 +47,22 @@ def load_qr_store() -> dict:
         return {}
 
 
-def save_qr_store(data: dict):
+def save_qr_store(data):
     _write(QR_STORE_FILE, data)
 
 
-def new_qr_id() -> str:
+def new_qr_id():
     return str(uuid.uuid4())
 
 
-def img_to_bytes(img: Image.Image) -> bytes:
+def img_to_bytes(img):
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     buffer.seek(0)
     return buffer.getvalue()
 
 
-def is_valid_url(url: str) -> bool:
+def is_valid_url(url):
     return url.startswith("http://") or url.startswith("https://")
 
 
@@ -120,9 +116,6 @@ def paste_logo(img, logo_img: Optional[Image.Image]):
     return img
 
 
-# ----------------------------------------------------
-# QR RECORD
-# ----------------------------------------------------
 def create_qr_record(destination, expires_in, password, tags=None, template=None):
     qr_id = new_qr_id()
     store = load_qr_store()
@@ -153,40 +146,23 @@ def create_qr_record(destination, expires_in, password, tags=None, template=None
     return qr_id
 
 
-def generate_qr(data, expires_in, password, logo, file, request, template=None, webhook=None):
-    rate_limit(request.client.host)
-
-    store = load_qr_store()
-
-    # URL mode (redirect + analytics)
-    if is_valid_url(data):
-        qr_id = create_qr_record(data, expires_in, password, template=template)
-        store[qr_id]["webhook"] = webhook
-        save_qr_store(store)
-
-        img = generate_qr_image(qr_id, data, logo, file, request, mode="redirect")
-        log_event({"type": "qr.generate", "qr_id": qr_id})
-
-        return Response(content=img_to_bytes(img), media_type="image/png")
-
-    # STRING mode (direct QR)
-    if len(data) > MAX_DATA_LENGTH:
-        raise HTTPException(400)
+def generate_qr_image(qr_id, logo=None, file=None, request=None):
+    base = str(request.base_url).rstrip("/")
+    redirect_url = f"{base}/r/{qr_id}"
 
     qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H)
-    qr.add_data(data)
+    qr.add_data(redirect_url)
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
     img = paste_logo(img, load_logo(logo, file))
+    img.save(f"static/{qr_id}.png")
+    return img
 
-    log_event({"type": "qr.generate.string"})
-    return Response(content=img_to_bytes(img), media_type="image/png")
 
 def generate_qr(data, expires_in, password, logo, file, request, template=None, webhook=None):
     rate_limit(request.client.host)
 
-    # URL mode (redirect + analytics)
     if is_valid_url(data):
         if len(data) > MAX_DATA_LENGTH:
             raise HTTPException(400)
@@ -200,7 +176,6 @@ def generate_qr(data, expires_in, password, logo, file, request, template=None, 
         log_event({"type": "qr.generate", "qr_id": qr_id})
         return Response(content=img_to_bytes(img), media_type="image/png")
 
-    # STRING mode (direct QR)
     if len(data) > MAX_DATA_LENGTH:
         raise HTTPException(400)
 
@@ -214,9 +189,7 @@ def generate_qr(data, expires_in, password, logo, file, request, template=None, 
     log_event({"type": "qr.generate.string"})
     return Response(content=img_to_bytes(img), media_type="image/png")
 
-# ----------------------------------------------------
-# REDIRECT + WEBHOOK
-# ----------------------------------------------------
+
 def _trigger_webhook(url, payload):
     if not url:
         return
@@ -268,9 +241,6 @@ def redirect_qr_service(request, qr_id, access_key):
     return RedirectResponse(url=record["destination"])
 
 
-# ----------------------------------------------------
-# STATS
-# ----------------------------------------------------
 def get_qr_stats(qr_id):
     store = load_qr_store()
     record = store.get(qr_id)
@@ -296,9 +266,6 @@ def get_qr_stats(qr_id):
     }
 
 
-# ----------------------------------------------------
-# LIST / SEARCH
-# ----------------------------------------------------
 def list_qr(page=1, limit=50):
     store = load_qr_store()
     items = list(store.items())
@@ -314,9 +281,6 @@ def search_qr(query):
     }
 
 
-# ----------------------------------------------------
-# EDIT / HISTORY
-# ----------------------------------------------------
 def edit_qr_service(qr_id, new_url):
     if not is_valid_url(new_url):
         raise HTTPException(400)
@@ -372,9 +336,6 @@ def delete_qr_service(qr_id):
     return {"status": "deleted"}
 
 
-# ----------------------------------------------------
-# TAGS
-# ----------------------------------------------------
 def add_qr_tag(qr_id, tag):
     store = load_qr_store()
     record = store.get(qr_id)
@@ -395,9 +356,6 @@ def get_qr_tags(qr_id):
     return record.get("tags", [])
 
 
-# ----------------------------------------------------
-# BARCODE
-# ----------------------------------------------------
 def generate_barcode(data, request):
     rate_limit(request.client.host)
 
@@ -410,9 +368,6 @@ def generate_barcode(data, request):
     return Response(content=buffer.getvalue(), media_type="image/png")
 
 
-# ----------------------------------------------------
-# WIFI QR
-# ----------------------------------------------------
 def generate_wifi_qr(ssid, password, security, logo, file, request):
     rate_limit(request.client.host)
 
@@ -430,9 +385,6 @@ def generate_wifi_qr(ssid, password, security, logo, file, request):
     return Response(content=img_to_bytes(img), media_type="image/png")
 
 
-# ----------------------------------------------------
-# CONTACT QR
-# ----------------------------------------------------
 def create_contact_qr(name, phone, email):
     data = f"BEGIN:VCARD\nVERSION:3.0\nFN:{name}\nTEL:{phone}\nEMAIL:{email}\nEND:VCARD"
     qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H)
@@ -444,16 +396,12 @@ def create_contact_qr(name, phone, email):
     return Response(content=img_to_bytes(img), media_type="image/png")
 
 
-# ----------------------------------------------------
-# API KEYS
-# ----------------------------------------------------
 def create_api_key_service(owner, limit):
     return {"api_key": create_api_key(owner, limit)}
 
 
 def daily_report():
     store = load_qr_store()
-
     return {
         "total_qr": len(store),
         "active": sum(1 for r in store.values() if r.get("active")),
