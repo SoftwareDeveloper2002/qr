@@ -153,35 +153,66 @@ def create_qr_record(destination, expires_in, password, tags=None, template=None
     return qr_id
 
 
-def generate_qr_image(qr_id, logo=None, file=None, request=None):
-    base = str(request.base_url).rstrip("/")
-    redirect_url = f"{base}/r/{qr_id}"
+def generate_qr(data, expires_in, password, logo, file, request, template=None, webhook=None):
+    rate_limit(request.client.host)
+
+    store = load_qr_store()
+
+    # URL mode (redirect + analytics)
+    if is_valid_url(data):
+        qr_id = create_qr_record(data, expires_in, password, template=template)
+        store[qr_id]["webhook"] = webhook
+        save_qr_store(store)
+
+        img = generate_qr_image(qr_id, data, logo, file, request, mode="redirect")
+        log_event({"type": "qr.generate", "qr_id": qr_id})
+
+        return Response(content=img_to_bytes(img), media_type="image/png")
+
+    # STRING mode (direct QR)
+    if len(data) > MAX_DATA_LENGTH:
+        raise HTTPException(400)
 
     qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H)
-    qr.add_data(redirect_url)
+    qr.add_data(data)
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
     img = paste_logo(img, load_logo(logo, file))
-    img.save(f"static/{qr_id}.png")
-    return img
 
-def generate_qr(data, expires_in, password, logo, file, request, template=None, webhook=None):
-    if len(data) > MAX_DATA_LENGTH:
-        raise HTTPException(400)
-    if not is_valid_url(data):
-        raise HTTPException(400)
-
-    rate_limit(request.client.host)
-    qr_id = create_qr_record(data, expires_in, password, template=template)
-    store = load_qr_store()
-    store[qr_id]["webhook"] = webhook
-    save_qr_store(store)
-
-    img = generate_qr_image(qr_id, logo, file, request)
-    log_event({"type": "qr.generate", "qr_id": qr_id})
+    log_event({"type": "qr.generate.string"})
     return Response(content=img_to_bytes(img), media_type="image/png")
 
+def generate_qr(data, expires_in, password, logo, file, request, template=None, webhook=None):
+    rate_limit(request.client.host)
+
+    # URL mode (redirect + analytics)
+    if is_valid_url(data):
+        if len(data) > MAX_DATA_LENGTH:
+            raise HTTPException(400)
+
+        qr_id = create_qr_record(data, expires_in, password, template=template)
+        store = load_qr_store()
+        store[qr_id]["webhook"] = webhook
+        save_qr_store(store)
+
+        img = generate_qr_image(qr_id, logo, file, request)
+        log_event({"type": "qr.generate", "qr_id": qr_id})
+        return Response(content=img_to_bytes(img), media_type="image/png")
+
+    # STRING mode (direct QR)
+    if len(data) > MAX_DATA_LENGTH:
+        raise HTTPException(400)
+
+    qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H)
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+    img = paste_logo(img, load_logo(logo, file))
+
+    log_event({"type": "qr.generate.string"})
+    return Response(content=img_to_bytes(img), media_type="image/png")
 
 # ----------------------------------------------------
 # REDIRECT + WEBHOOK
