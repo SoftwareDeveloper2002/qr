@@ -67,11 +67,11 @@ def api_generate_qr(
     expires_in: int = Form(None),
     password: str = Form(None),
     logo: str = Form(None),
+    webhook: str = Form(None),
     file: UploadFile = File(None),
     request: Request = None,
 ):
-    return generate_qr(data, expires_in, password, logo, file, request)
-
+    return generate_qr(data, expires_in, password, logo, file, request, webhook=webhook)
 
 @app.get("/r/{qr_id}")
 def redirect_qr(request: Request, qr_id: str, access_key: str = None):
